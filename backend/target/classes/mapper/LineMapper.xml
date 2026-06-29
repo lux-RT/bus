@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bus.mapper.LineMapper">
+
+    <resultMap id="lineResultMap" type="com.bus.entity.Line">
+        <id property="lineId" column="line_id"/>
+        <result property="lineName" column="line_name"/>
+        <result property="fleetId" column="fleet_id"/>
+        <result property="totalStations" column="total_stations"/>
+        <result property="roadCaptainName" column="road_captain_name"/>
+        <result property="fleetName" column="fleet_name"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="lineResultMap">
+        SELECT l.line_id, l.line_name, l.fleet_id, l.total_stations,
+               d.name AS road_captain_name,
+               f.fleet_name
+        FROM line l
+        LEFT JOIN driver d ON d.line_id = l.line_id AND d.is_road_captain = TRUE
+        LEFT JOIN fleet f ON l.fleet_id = f.fleet_id
+        WHERE l.line_id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="lineId">
+        INSERT INTO line (line_name, fleet_id, total_stations)
+        VALUES (#{lineName}, #{fleetId}, #{totalStations})
+    </insert>
+
+    <update id="update">
+        UPDATE line
+        <set>
+            <if test="lineName != null">line_name = #{lineName},</if>
+            <if test="fleetId != null">fleet_id = #{fleetId},</if>
+            <if test="totalStations != null">total_stations = #{totalStations},</if>
+        </set>
+        WHERE line_id = #{lineId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM line WHERE line_id = #{id}
+    </delete>
+
+    <select id="selectAll" resultMap="lineResultMap">
+        SELECT l.line_id, l.line_name, l.fleet_id, l.total_stations,
+               d.name AS road_captain_name,
+               f.fleet_name
+        FROM line l
+        LEFT JOIN driver d ON d.line_id = l.line_id AND d.is_road_captain = TRUE
+        LEFT JOIN fleet f ON l.fleet_id = f.fleet_id
+        <where>
+            <if test="lineName != null and lineName != ''">
+                AND l.line_name LIKE CONCAT('%', #{lineName}, '%')
+            </if>
+            <if test="fleetId != null">
+                AND l.fleet_id = #{fleetId}
+            </if>
+        </where>
+        ORDER BY l.line_id ASC
+    </select>
+
+    <select id="selectAllList" resultMap="lineResultMap">
+        SELECT l.line_id, l.line_name, l.fleet_id, l.total_stations,
+               d.name AS road_captain_name,
+               f.fleet_name
+        FROM line l
+        LEFT JOIN driver d ON d.line_id = l.line_id AND d.is_road_captain = TRUE
+        LEFT JOIN fleet f ON l.fleet_id = f.fleet_id
+        ORDER BY l.line_id ASC
+    </select>
+
+    <update id="updateTotalStations">
+        UPDATE line SET total_stations = (
+            SELECT COUNT(*) FROM line_station WHERE line_id = #{lineId}
+        ) WHERE line_id = #{lineId}
+    </update>
+
+    <select id="selectByFleetId" resultMap="lineResultMap">
+        SELECT l.line_id, l.line_name, l.fleet_id, l.total_stations,
+               d.name AS road_captain_name,
+               f.fleet_name
+        FROM line l
+        LEFT JOIN driver d ON d.line_id = l.line_id AND d.is_road_captain = TRUE
+        LEFT JOIN fleet f ON l.fleet_id = f.fleet_id
+        WHERE l.fleet_id = #{fleetId}
+    </select>
+
+</mapper>

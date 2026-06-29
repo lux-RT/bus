@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bus.mapper.ViolationRecordMapper">
+
+    <resultMap id="violationRecordResultMap" type="com.bus.entity.ViolationRecord">
+        <id property="recordId" column="record_id"/>
+        <result property="driverId" column="driver_id"/>
+        <result property="vehicleId" column="vehicle_id"/>
+        <result property="lineId" column="line_id"/>
+        <result property="stationId" column="station_id"/>
+        <result property="violationTypeId" column="violation_type_id"/>
+        <result property="violationTime" column="violation_time"/>
+        <result property="description" column="description"/>
+        <result property="inputterId" column="inputter_id"/>
+        <result property="driverName" column="driver_name"/>
+        <result property="licensePlate" column="license_plate"/>
+        <result property="lineName" column="line_name"/>
+        <result property="typeName" column="type_name"/>
+        <result property="stationName" column="station_name"/>
+    </resultMap>
+
+    <select id="selectList" resultMap="violationRecordResultMap">
+        SELECT * FROM driver_violation_view
+        ORDER BY violation_time DESC
+    </select>
+
+    <select id="selectById" resultMap="violationRecordResultMap">
+        SELECT * FROM driver_violation_view
+        WHERE record_id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="recordId">
+        INSERT INTO violation_record (driver_id, vehicle_id, line_id, station_id, violation_type_id,
+                                      violation_time, description, inputter_id)
+        VALUES (#{driverId}, #{vehicleId}, #{lineId}, #{stationId}, #{violationTypeId},
+                #{violationTime}, #{description}, #{inputterId})
+    </insert>
+
+    <update id="update">
+        UPDATE violation_record
+        <set>
+            <if test="driverId != null">driver_id = #{driverId},</if>
+            <if test="vehicleId != null">vehicle_id = #{vehicleId},</if>
+            <if test="lineId != null">line_id = #{lineId},</if>
+            <if test="stationId != null">station_id = #{stationId},</if>
+            <if test="violationTypeId != null">violation_type_id = #{violationTypeId},</if>
+            <if test="violationTime != null">violation_time = #{violationTime},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="inputterId != null">inputter_id = #{inputterId},</if>
+        </set>
+        WHERE record_id = #{recordId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM violation_record WHERE record_id = #{id}
+    </delete>
+
+    <!-- 多条件搜索 -->
+    <select id="searchByCondition" resultMap="violationRecordResultMap">
+        SELECT * FROM driver_violation_view
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (driver_name LIKE CONCAT('%', #{keyword}, '%')
+                     OR license_plate LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="fleetId != null">
+                AND fleet_id = #{fleetId}
+            </if>
+            <if test="lineId != null">
+                AND line_id = #{lineId}
+            </if>
+            <if test="violationTypeId != null">
+                AND violation_type_id = #{violationTypeId}
+            </if>
+            <if test="stationId != null">
+                AND station_id = #{stationId}
+            </if>
+            <if test="startTime != null and startTime != ''">
+                AND violation_time &gt;= #{startTime}
+            </if>
+            <if test="endTime != null and endTime != ''">
+                AND violation_time &lt;= #{endTime}
+            </if>
+        </where>
+        ORDER BY violation_time DESC
+    </select>
+
+    <!-- 按车队统计 -->
+    <select id="selectStatsByFleet" resultType="java.util.Map">
+        SELECT f.fleet_name AS name,
+               COUNT(*) AS total_count,
+               SUM(CASE WHEN vt.type_name = '闯红灯' THEN 1 ELSE 0 END) AS red_light,
+               SUM(CASE WHEN vt.type_name = '压线' THEN 1 ELSE 0 END) AS line_crossing,
+               SUM(CASE WHEN vt.type_name = '未礼让斑马线' THEN 1 ELSE 0 END) AS no_yield,
+               SUM(CASE WHEN vt.type_name = '违章停车' THEN 1 ELSE 0 END) AS illegal_parking,
+               SUM(CASE WHEN vt.type_name = '超速' THEN 1 ELSE 0 END) AS speeding
+        FROM violation_record v
+        JOIN line l ON v.line_id = l.line_id
+        JOIN fleet f ON l.fleet_id = f.fleet_id
+        JOIN violation_type vt ON v.violation_type_id = vt.type_id
+        <where>
+            <if test="startTime != null and startTime != ''">
+                AND v.violation_time &gt;= #{startTime}
+            </if>
+            <if test="endTime != null and endTime != ''">
+                AND v.violation_time &lt;= #{endTime}
+            </if>
+        </where>
+        GROUP BY f.fleet_id, f.fleet_name
+    </select>
+
+    <!-- 按线路统计 -->
+    <select id="selectStatsByLine" resultType="java.util.Map">
+        SELECT l.line_name AS name,
+               COUNT(*) AS total_count,
+               SUM(CASE WHEN vt.type_name = '闯红灯' THEN 1 ELSE 0 END) AS red_light,
+               SUM(CASE WHEN vt.type_name = '压线' THEN 1 ELSE 0 END) AS line_crossing,
+               SUM(CASE WHEN vt.type_name = '未礼让斑马线' THEN 1 ELSE 0 END) AS no_yield,
+               SUM(CASE WHEN vt.type_name = '违章停车' THEN 1 ELSE 0 END) AS illegal_parking,
+               SUM(CASE WHEN vt.type_name = '超速' THEN 1 ELSE 0 END) AS speeding
+        FROM violation_record v
+        JOIN line l ON v.line_id = l.line_id
+        JOIN violation_type vt ON v.violation_type_id = vt.type_id
+        <where>
+            <if test="startTime != null and startTime != ''">
+                AND v.violation_time &gt;= #{startTime}
+            </if>
+            <if test="endTime != null and endTime != ''">
+                AND v.violation_time &lt;= #{endTime}
+            </if>
+        </where>
+        GROUP BY l.line_id, l.line_name
+    </select>
+
+    <!-- 按违章类型统计 -->
+    <select id="selectStatsByType" resultType="java.util.Map">
+        SELECT vt.type_name AS name,
+               COUNT(*) AS total_count
+        FROM violation_record v
+        JOIN violation_type vt ON v.violation_type_id = vt.type_id
+        <where>
+            <if test="startTime != null and startTime != ''">
+                AND v.violation_time &gt;= #{startTime}
+            </if>
+            <if test="endTime != null and endTime != ''">
+                AND v.violation_time &lt;= #{endTime}
+            </if>
+        </where>
+        GROUP BY vt.type_id, vt.type_name
+    </select>
+
+    <!-- 按月份统计 -->
+    <select id="selectStatsByTime" resultType="java.util.Map">
+        SELECT DATE_FORMAT(v.violation_time, '%Y-%m') AS month,
+               COUNT(*) AS count
+        FROM violation_record v
+        <where>
+            <if test="startTime != null and startTime != ''">
+                AND v.violation_time &gt;= #{startTime}
+            </if>
+            <if test="endTime != null and endTime != ''">
+                AND v.violation_time &lt;= #{endTime}
+            </if>
+        </where>
+        GROUP BY DATE_FORMAT(v.violation_time, '%Y-%m')
+        ORDER BY month
+    </select>
+
+</mapper>

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bus.mapper.StationMapper">
+
+    <resultMap id="stationResultMap" type="com.bus.entity.Station">
+        <id property="stationId" column="station_id"/>
+        <result property="stationName" column="station_name"/>
+        <result property="address" column="address"/>
+    </resultMap>
+
+    <select id="selectList" resultMap="stationResultMap">
+        SELECT station_id, station_name, address
+        FROM station
+        ORDER BY station_id ASC
+    </select>
+
+    <select id="selectById" resultMap="stationResultMap">
+        SELECT station_id, station_name, address
+        FROM station
+        WHERE station_id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="stationId">
+        INSERT INTO station (station_name, address)
+        VALUES (#{stationName}, #{address})
+    </insert>
+
+    <update id="update">
+        UPDATE station
+        <set>
+            <if test="stationName != null">station_name = #{stationName},</if>
+            <if test="address != null">address = #{address},</if>
+        </set>
+        WHERE station_id = #{stationId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM station WHERE station_id = #{id}
+    </delete>
+
+    <!-- 站点分页查询 -->
+    <select id="selectAll" resultMap="stationResultMap">
+        SELECT station_id, station_name, address
+        FROM station
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (station_name LIKE CONCAT('%', #{keyword}, '%') OR address LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+        ORDER BY station_id ASC
+    </select>
+
+    <select id="selectAllList" resultMap="stationResultMap">
+        SELECT station_id, station_name, address
+        FROM station
+        ORDER BY station_id ASC
+    </select>
+
+</mapper>

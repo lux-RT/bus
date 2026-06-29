@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bus.mapper.FleetMapper">
+
+    <resultMap id="fleetResultMap" type="com.bus.entity.Fleet">
+        <id property="fleetId" column="fleet_id"/>
+        <result property="fleetName" column="fleet_name"/>
+        <result property="captainId" column="captain_id"/>
+        <result property="createTime" column="create_time"/>
+        <result property="captainName" column="captain_name"/>
+    </resultMap>
+
+    <!-- 车队分页查询 -->
+    <select id="selectAll" resultMap="fleetResultMap">
+        SELECT f.fleet_id, f.fleet_name, f.captain_id, f.create_time,
+               d.name AS captain_name
+        FROM fleet f
+        LEFT JOIN driver d ON f.captain_id = d.driver_id
+        <where>
+            <if test="fleetName != null and fleetName != ''">
+                AND f.fleet_name LIKE CONCAT('%', #{fleetName}, '%')
+            </if>
+            <if test="startTime != null">
+                AND f.create_time &gt;= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND f.create_time &lt;= #{endTime}
+            </if>
+        </where>
+        ORDER BY f.create_time DESC
+    </select>
+
+    <select id="selectById" resultMap="fleetResultMap">
+        SELECT f.fleet_id, f.fleet_name, f.captain_id, f.create_time,
+               d.name AS captain_name
+        FROM fleet f
+        LEFT JOIN driver d ON f.captain_id = d.driver_id
+        WHERE f.fleet_id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="fleetId">
+        INSERT INTO fleet (fleet_name, captain_id, create_time)
+        VALUES (#{fleetName}, #{captainId}, #{createTime})
+    </insert>
+
+    <update id="update">
+        UPDATE fleet
+        <set>
+            <if test="fleetName != null">fleet_name = #{fleetName},</if>
+            <if test="captainId != null">captain_id = #{captainId},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+        </set>
+        WHERE fleet_id = #{fleetId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM fleet WHERE fleet_id = #{id}
+    </delete>
+
+    <select id="selectAllList" resultMap="fleetResultMap">
+        SELECT f.fleet_id, f.fleet_name, f.captain_id, f.create_time,
+               d.name AS captain_name
+        FROM fleet f
+        LEFT JOIN driver d ON f.captain_id = d.driver_id
+    </select>
+
+</mapper>

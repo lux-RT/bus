@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bus.mapper.VehicleMapper">
+
+    <resultMap id="vehicleResultMap" type="com.bus.entity.Vehicle">
+        <id property="vehicleId" column="vehicle_id"/>
+        <result property="licensePlate" column="license_plate"/>
+        <result property="lineId" column="line_id"/>
+        <result property="model" column="model"/>
+        <result property="purchaseTime" column="purchase_time"/>
+        <result property="status" column="status"/>
+        <result property="lineName" column="line_name"/>
+    </resultMap>
+
+    <!-- 车辆分页查询 -->
+    <select id="selectAll" resultMap="vehicleResultMap">
+        SELECT v.vehicle_id, v.license_plate, v.line_id, v.model, v.purchase_time, v.status,
+               l.line_name
+        FROM vehicle v
+        LEFT JOIN line l ON v.line_id = l.line_id
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (v.license_plate LIKE CONCAT('%', #{keyword}, '%') OR v.model LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="lineId != null">
+                AND v.line_id = #{lineId}
+            </if>
+            <if test="status != null and status != ''">
+                AND v.status = #{status}
+            </if>
+        </where>
+        ORDER BY v.purchase_time DESC
+    </select>
+
+    <select id="selectById" resultMap="vehicleResultMap">
+        SELECT v.vehicle_id, v.license_plate, v.line_id, v.model, v.purchase_time, v.status,
+               l.line_name
+        FROM vehicle v
+        LEFT JOIN line l ON v.line_id = l.line_id
+        WHERE v.vehicle_id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="vehicleId">
+        INSERT INTO vehicle (license_plate, line_id, model, purchase_time, status)
+        VALUES (#{licensePlate}, #{lineId}, #{model}, #{purchaseTime}, #{status})
+    </insert>
+
+    <update id="update">
+        UPDATE vehicle
+        <set>
+            <if test="licensePlate != null">license_plate = #{licensePlate},</if>
+            <if test="lineId != null">line_id = #{lineId},</if>
+            <if test="model != null">model = #{model},</if>
+            <if test="purchaseTime != null">purchase_time = #{purchaseTime},</if>
+            <if test="status != null">status = #{status},</if>
+        </set>
+        WHERE vehicle_id = #{vehicleId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM vehicle WHERE vehicle_id = #{id}
+    </delete>
+
+    <select id="selectAllList" resultMap="vehicleResultMap">
+        SELECT v.vehicle_id, v.license_plate, v.line_id, v.model, v.purchase_time, v.status,
+               l.line_name
+        FROM vehicle v
+        LEFT JOIN line l ON v.line_id = l.line_id
+    </select>
+
+    <select id="selectByLineId" resultMap="vehicleResultMap">
+        SELECT v.vehicle_id, v.license_plate, v.line_id, v.model, v.purchase_time, v.status,
+               l.line_name
+        FROM vehicle v
+        LEFT JOIN line l ON v.line_id = l.line_id
+        WHERE v.line_id = #{lineId}
+    </select>
+
+</mapper>

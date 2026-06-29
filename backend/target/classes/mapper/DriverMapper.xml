@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bus.mapper.DriverMapper">
+
+    <resultMap id="driverResultMap" type="com.bus.entity.Driver">
+        <id property="driverId" column="driver_id"/>
+        <result property="name" column="name"/>
+        <result property="gender" column="gender"/>
+        <result property="age" column="age"/>
+        <result property="phone" column="phone"/>
+        <result property="lineId" column="line_id"/>
+        <result property="lineName" column="line_name"/>
+        <result property="fleetName" column="fleet_name"/>
+        <result property="isRoadCaptain" column="is_road_captain"/>
+        <result property="isCaptain" column="is_captain"/>
+        <result property="hireDate" column="hire_date"/>
+    </resultMap>
+
+    <select id="selectList" resultMap="driverResultMap">
+        SELECT d.driver_id, d.name, d.gender, d.age, d.phone, d.line_id,
+               l.line_name, f.fleet_name,
+               d.is_road_captain, d.is_captain, d.hire_date
+        FROM driver d
+        LEFT JOIN line l ON d.line_id = l.line_id
+        LEFT JOIN fleet f ON (l.fleet_id = f.fleet_id OR f.captain_id = d.driver_id)
+    </select>
+
+    <select id="selectById" resultMap="driverResultMap">
+        SELECT d.driver_id, d.name, d.gender, d.age, d.phone, d.line_id,
+               l.line_name, f.fleet_name,
+               d.is_road_captain, d.is_captain, d.hire_date
+        FROM driver d
+        LEFT JOIN line l ON d.line_id = l.line_id
+        LEFT JOIN fleet f ON (l.fleet_id = f.fleet_id OR f.captain_id = d.driver_id)
+        WHERE d.driver_id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="driverId">
+        INSERT INTO driver (name, gender, age, phone, line_id, is_road_captain, is_captain, hire_date)
+        VALUES (#{name}, #{gender}, #{age}, #{phone}, #{lineId}, #{isRoadCaptain}, #{isCaptain}, #{hireDate})
+    </insert>
+
+    <update id="update">
+        UPDATE driver
+        <set>
+            <if test="name != null">name = #{name},</if>
+            <if test="gender != null">gender = #{gender},</if>
+            <if test="age != null">age = #{age},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="lineId != null">line_id = #{lineId},</if>
+            <if test="isRoadCaptain != null">is_road_captain = #{isRoadCaptain},</if>
+            <if test="isCaptain != null">is_captain = #{isCaptain},</if>
+            <if test="hireDate != null">hire_date = #{hireDate},</if>
+        </set>
+        WHERE driver_id = #{driverId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM driver WHERE driver_id = #{id}
+    </delete>
+
+    <!-- 司机分页查询 -->
+    <select id="selectAll" resultMap="driverResultMap">
+        SELECT d.driver_id, d.name, d.gender, d.age, d.phone, d.line_id,
+               l.line_name, f.fleet_name,
+               d.is_road_captain, d.is_captain, d.hire_date
+        FROM driver d
+        LEFT JOIN line l ON d.line_id = l.line_id
+        LEFT JOIN fleet f ON (l.fleet_id = f.fleet_id OR f.captain_id = d.driver_id)
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (d.name LIKE CONCAT('%', #{keyword}, '%') OR d.driver_id LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="lineId != null">
+                AND d.line_id = #{lineId}
+            </if>
+            <if test="fleetId != null">
+                AND l.fleet_id = #{fleetId}
+            </if>
+            <if test="gender != null and gender != ''">
+                AND d.gender = #{gender}
+            </if>
+        </where>
+        ORDER BY d.hire_date DESC
+    </select>
+
+    <select id="selectAllList" resultMap="driverResultMap">
+        SELECT d.driver_id, d.name, d.gender, d.age, d.phone, d.line_id,
+               l.line_name, f.fleet_name,
+               d.is_road_captain, d.is_captain, d.hire_date
+        FROM driver d
+        LEFT JOIN line l ON d.line_id = l.line_id
+        LEFT JOIN fleet f ON (l.fleet_id = f.fleet_id OR f.captain_id = d.driver_id)
+    </select>
+
+    <select id="selectByLineId" resultMap="driverResultMap">
+        SELECT d.driver_id, d.name, d.gender, d.age, d.phone, d.line_id,
+               l.line_name, f.fleet_name,
+               d.is_road_captain, d.is_captain, d.hire_date
+        FROM driver d
+        LEFT JOIN line l ON d.line_id = l.line_id
+        LEFT JOIN fleet f ON (l.fleet_id = f.fleet_id OR f.captain_id = d.driver_id)
+        WHERE d.line_id = #{lineId}
+    </select>
+
+    <select id="selectByFleetId" resultMap="driverResultMap">
+        SELECT d.driver_id, d.name, d.gender, d.age, d.phone, d.line_id,
+               l.line_name, f.fleet_name,
+               d.is_road_captain, d.is_captain, d.hire_date
+        FROM driver d
+        LEFT JOIN line l ON d.line_id = l.line_id
+        LEFT JOIN fleet f ON l.fleet_id = f.fleet_id
+        WHERE l.fleet_id = #{fleetId}
+           OR d.driver_id IN (SELECT captain_id FROM fleet WHERE fleet_id = #{fleetId})
+    </select>
+
+</mapper>
